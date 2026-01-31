@@ -21,6 +21,23 @@ public abstract class Character : MonoBehaviour
     protected CharState state;
     public CharState State { get { return state; } }
 
+    [SerializeField]
+    protected GameObject ringSelection;
+    public GameObject RingSelection { get { return ringSelection; } }
+
+    public void ToggleRingSelection(bool flag)
+    {
+        // Add this 'if' statement to check if ringSelection exists before using it
+        if (ringSelection != null)
+        {
+            ringSelection.SetActive(flag);
+        }
+        else
+        {
+            Debug.LogWarning("Ring Selection is not assigned on " + gameObject.name);
+        }
+    }
+
     void Awake()
     {
         navAgent = GetComponent<NavMeshAgent>();
