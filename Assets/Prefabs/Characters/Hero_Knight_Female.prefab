@@ -1221,9 +1221,9 @@ GameObject:
   - component: {fileID: 7766655735174284415}
   - component: {fileID: -6095135941509686690}
   - component: {fileID: -4293702181075504145}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Hero_Knight_Female
-  m_TagString: Untagged
+  m_TagString: Hero
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
