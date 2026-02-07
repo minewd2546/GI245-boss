@@ -13,17 +13,18 @@ public class CharAnimation : MonoBehaviour
     // 8.17: เมธอดสำหรับเลือกเล่น Animation ตามสถานะของตัวละคร
     private void ChooseAnimation(Character c)
     {
-        // รีเซ็ตค่า Boolean เดิมก่อน
+        // รีเซ็ตค่า Parameter ให้เป็น false ก่อน
         c.Anim.SetBool("IsIdle", false);
         c.Anim.SetBool("IsWalk", false);
 
-        // เช็คสถานะปัจจุบันของตัวละคร (c.State)
         switch (c.State)
         {
             case CharState.Idle:
                 c.Anim.SetBool("IsIdle", true);
                 break;
+
             case CharState.Walk:
+            case CharState.WalkToEnemy: // ใช้ท่าเดินเหมือนกัน
                 c.Anim.SetBool("IsWalk", true);
                 break;
         }
@@ -31,7 +32,7 @@ public class CharAnimation : MonoBehaviour
 
     void Update()
     {
-        // อย่าลืมเรียกใช้เมธอด ChooseAnimation ใน Update เพื่อให้มันอัปเดตตลอดเวลา
+        // เรียกใช้เมธอด ChooseAnimation ใน Update เพื่อให้มันอัปเดตตลอดเวลา
         if (character != null)
         {
             ChooseAnimation(character);
