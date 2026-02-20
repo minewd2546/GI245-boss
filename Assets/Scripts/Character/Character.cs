@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,6 +9,8 @@ public enum CharState
     Walk,
     WalkToEnemy,
     Attack,
+    WalkToMagicCast,
+    MagicCast,
     Hit,
     Die
 }
@@ -21,6 +24,24 @@ public abstract class Character : MonoBehaviour
     public Animator Anim { get { return anim; } }
 
     [SerializeField]
+    protected List<Magic> magicSkills = new List<Magic>();
+    public List<Magic> MagicSkills
+    { get { return magicSkills; } set { magicSkills = value; } }
+
+    [SerializeField]
+    protected Magic curMagicCast = null;
+    public Magic CurMagicCast
+    { get { return curMagicCast; } set { curMagicCast = value; } }
+
+    [SerializeField]
+    protected bool isMagicMode = false;
+    public bool IsMagicMode
+    { get { return isMagicMode; } set { isMagicMode = value; } }
+
+    protected VFXManager vfxManager;
+    protected UIManager uiManager;
+    
+    [SerializeField]
     protected CharState state;
     public CharState State { get { return state; } }
 
@@ -28,14 +49,14 @@ public abstract class Character : MonoBehaviour
     protected GameObject ringSelection;
     public GameObject RingSelection { get { return ringSelection; } }
 
-    // --- ส่วนประกาศตัวแปร (ด้านบนของคลาส) ---
+    
     [SerializeField] protected int curHP = 10;
     public int CurHP { get { return curHP; } }
 
     [SerializeField]
-    protected Character curCharTarget; // ตัวแปรเดิมที่มีอยู่แล้ว
+    protected Character curCharTarget; 
 
-    // เพิ่มบรรทัดนี้เข้าไปต่อท้ายครับ
+    
     public Character CurCharTarget { get { return curCharTarget; } set { curCharTarget = value; } }
     [SerializeField] protected int attackDamage = 3;
 
@@ -45,36 +66,38 @@ public abstract class Character : MonoBehaviour
     [SerializeField] protected float attackCoolDown = 2f;
 
     [SerializeField] protected float attackTimer = 0f;
-    [SerializeField] protected float findingRange = 20f; // ระยะค้นหาศัตรู (เช่น 20 เมตร)
+    [SerializeField] protected float findingRange = 20f; // ๏ฟฝ๏ฟฝ๏ฟฝะค๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝ๏ฟฝ (๏ฟฝ๏ฟฝ 20 ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ)
     public float FindingRange { get { return findingRange; } }
 
-    // --- ฟังก์ชันสั่งให้เดินไปโจมตีเป้าหมาย ---
+    
     public void ToAttackCharacter(Character target)
     {
-        // ถ้าตายอยู่หรือเลือดหมด ไม่ต้องทำอะไร
+        
         if (curHP <= 0 || state == CharState.Die)
             return;
 
-        // ล็อคเป้าหมาย
+        // ๏ฟฝ๏ฟฝอค๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         curCharTarget = target;
 
-        // สั่งให้ NavMeshAgent เดินไปยังตำแหน่งของเป้าหมาย
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ NavMeshAgent ๏ฟฝิน๏ฟฝ๏ฟฝัง๏ฟฝ๏ฟฝ๏ฟฝหน่งของ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         navAgent.SetDestination(target.transform.position);
         navAgent.isStopped = false;
-
-        // เปลี่ยนสถานะเป็นเดินไปหาศัตรู
-        SetState(CharState.WalkToEnemy);
+        
+        if (isMagicMode)
+            SetState(CharState.WalkToMagicCast);
+        else
+            SetState(CharState.WalkToEnemy);
     }
 
     public bool IsMyEnemy(string targetTag)
     {
         string myTag = gameObject.tag;
 
-        // ถ้าเราเป็น Hero แล้วเจอป้ายชื่อ Enemy -> ใช่ศัตรู
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ Hero ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอป๏ฟฝ๏ฟฝยช๏ฟฝ๏ฟฝ๏ฟฝ Enemy -> ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝ๏ฟฝ
         if ((myTag == "Hero" || myTag == "Player") && targetTag == "Enemy")
             return true;
 
-        // ถ้าเราเป็น Enemy แล้วเจอป้ายชื่อ Hero -> ใช่ศัตรู
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ Enemy ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอป๏ฟฝ๏ฟฝยช๏ฟฝ๏ฟฝ๏ฟฝ Hero -> ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝ๏ฟฝ
         if (myTag == "Enemy" && (targetTag == "Hero" || targetTag == "Player"))
             return true;
 
@@ -87,65 +110,79 @@ public abstract class Character : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public void ReceiveDamage(Character enemy)
+    public void ReceiveDamage(int damage)
     {
-        // ถ้าตายอยู่แล้ว ไม่ต้องรับดาเมจเพิ่ม
+        // ๏ฟฝ๏ฟฝาต๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอง๏ฟฝับ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         if (curHP <= 0 || state == CharState.Die)
             return;
 
-        // ลดเลือดตามพลังโจมตีของศัตรู
-        curHP -= enemy.attackDamage;
+        // ลด๏ฟฝ๏ฟฝ๏ฟฝอด๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัง๏ฟฝ๏ฟฝ๏ฟฝีของ๏ฟฝัต๏ฟฝ๏ฟฝ
+        curHP -= damage;
 
-        // ถ้าเลือดหมด
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอด๏ฟฝ๏ฟฝ๏ฟฝ
         if (curHP <= 0)
         {
             curHP = 0;
-            Die(); // เรียกฟังก์ชันตาย
+            Die(); // ๏ฟฝ๏ฟฝ๏ฟฝยก๏ฟฝัง๏ฟฝ๏ฟฝัน๏ฟฝ๏ฟฝ๏ฟฝ
         }
     }
-
+    
+    public void charInit(VFXManager vfxM , UIManager uiM)
+    {
+        vfxManager = vfxM;
+        uiManager = uiM;
+    }
+    
     protected void AttackLogic()
     {
-        // ดึงคอมโพเนนต์ Character ของเป้าหมายออกมา
+        // ๏ฟฝึง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝเนน๏ฟฝ๏ฟฝ Character ๏ฟฝอง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอก๏ฟฝ๏ฟฝ
         Character target = curCharTarget.GetComponent<Character>();
 
-        // ถ้ามีเป้าหมายอยู่จริง ให้สั่งลดเลือด
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝิง ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝลด๏ฟฝ๏ฟฝ๏ฟฝอด
         if (target != null)
         {
-            target.ReceiveDamage(this);
+            target.ReceiveDamage(attackDamage);
         }
     }
+    
+    protected void MagicCastLogic(Magic magic)
+    {
+        Character target = curCharTarget.GetComponent<Character>();
 
+        if (target != null)
+            target.ReceiveDamage(magic.Power);
+    }
+    
     protected virtual void Die()
     {
-        // หยุดการเคลื่อนที่
+        // ๏ฟฝ๏ฟฝุด๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอน๏ฟฝ๏ฟฝ๏ฟฝ
         navAgent.isStopped = true;
         SetState(CharState.Die);
 
-        // เล่น Animation ท่าตาย (ต้องมี Trigger ชื่อ "Die" ใน Animator)
+        // ๏ฟฝ๏ฟฝ๏ฟฝ Animation ๏ฟฝ๏ฟฝาต๏ฟฝ๏ฟฝ (๏ฟฝ๏ฟฝอง๏ฟฝ๏ฟฝ Trigger ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ "Die" ๏ฟฝ Animator)
         anim.SetTrigger("Die");
 
-        // เริ่มนับถอยหลังทำลาย Object (เรียกใช้ฟังก์ชันที่เราเพิ่งเขียนไปก่อนหน้า)
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝับ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ Object (๏ฟฝ๏ฟฝ๏ฟฝยก๏ฟฝ๏ฟฝัง๏ฟฝ๏ฟฝัน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝยนไปก๏ฟฝอนหน๏ฟฝ๏ฟฝ)
         StartCoroutine(DestroyObject());
     }
 
 
     protected void WalkToEnemyUpdate()
     {
-        // ถ้าเป้าหมายหายไป ให้กลับไปสถานะ Idle
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝับ๏ฟฝสถาน๏ฟฝ Idle
         if (curCharTarget == null)
         {
             SetState(CharState.Idle);
             return;
         }
 
-        // อัปเดตตำแหน่งเป้าหมายเผื่อศัตรูขยับหนี
+        // ๏ฟฝัปเดต๏ฟฝ๏ฟฝ๏ฟฝหน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝูข๏ฟฝับหน๏ฟฝ
         navAgent.SetDestination(curCharTarget.transform.position);
 
-        // คำนวณระยะห่างระหว่างตัวเรากับเป้าหมาย
+        // ๏ฟฝำนวณ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝาง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝาง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝากับ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
-        // ถ้าเข้าระยะโจมตีแล้ว ให้เปลี่ยนเป็นสถานะ Attack
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝยน๏ฟฝ๏ฟฝสถาน๏ฟฝ Attack
         if (distance <= attackRange)
         {
             SetState(CharState.Attack);
@@ -153,23 +190,83 @@ public abstract class Character : MonoBehaviour
             // //First Attack
         }
     }
+    
+    private IEnumerator ShootMagicCast(Magic curMagicCast)
+    {
+        if (vfxManager != null)
+            vfxManager.ShootMagic(curMagicCast.ShootID,
+                transform.position,
+                curCharTarget.transform.position,
+                curMagicCast.ShootTime);
 
+        yield return new WaitForSeconds(curMagicCast.ShootTime);
+
+        //cast logic
+        MagicCastLogic(curMagicCast);
+        isMagicMode = false;
+
+        SetState(CharState.Idle);
+        if (uiManager != null)
+            uiManager.IsOnCurToggleMagic(false);
+    }
+
+    private IEnumerator LoadMagicCast(Magic curMagicCast)
+    {
+        if (vfxManager != null)
+            vfxManager.LoadMagic(curMagicCast.LoadID,
+                transform.position,
+                curMagicCast.LoadTime);
+
+        yield return new WaitForSeconds(curMagicCast.LoadTime);
+
+        StartCoroutine(ShootMagicCast(curMagicCast));
+    }
+
+    private void MagicCast(Magic curMagicCast)
+    {
+        transform.LookAt(curCharTarget.transform);
+        anim.SetTrigger("MagicAttack");
+
+        StartCoroutine(LoadMagicCast(curMagicCast));
+    }
+    
+    protected void WalkToMagicCastUpdate()
+    {
+        if (curCharTarget == null || curMagicCast == null)
+        {
+            SetState(CharState.Idle);
+            return;
+        }
+
+        navAgent.SetDestination(curCharTarget.transform.position);
+
+        float distance = Vector3.Distance(transform.position,
+            curCharTarget.transform.position);
+
+        if (distance <= curMagicCast.Range)
+        {
+            navAgent.isStopped = true;
+            SetState(CharState.MagicCast);
+
+            MagicCast(curMagicCast);
+        }
+    }
     protected void AttackUpdate()
     {
         if (curCharTarget == null)
             return;
 
-        // ถ้าศัตรูตายแล้ว (HP หมด) ให้เราหยุดและกลับไปยืนเฉยๆ
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝูต๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ (HP ๏ฟฝ๏ฟฝ๏ฟฝ) ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝุด๏ฟฝ๏ฟฝะก๏ฟฝับ๏ฟฝ๏ฟฝืน๏ฟฝ๏ฟฝ๏ฟฝ
         if (curCharTarget.CurHP <= 0)
         {
             SetState(CharState.Idle);
             return;
         }
 
-        // สั่งให้ NavMeshAgent หยุดเดิน (เพื่อยืนฟัน)
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ NavMeshAgent ๏ฟฝ๏ฟฝุด๏ฟฝิน (๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝืน๏ฟฝัน)
         navAgent.isStopped = true;
 
-        // นับเวลาถอยหลังสำหรับการโจมตีครั้งถัดไป (Cooldown)
+        // ๏ฟฝับ๏ฟฝ๏ฟฝ๏ฟฝาถ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝับ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝีค๏ฟฝ๏ฟฝ้งถัด๏ฟฝ (Cooldown)
         attackTimer += Time.deltaTime;
         if (attackTimer >= attackCoolDown)
         {
@@ -177,12 +274,12 @@ public abstract class Character : MonoBehaviour
             Attack();
         }
 
-        // เช็คระยะห่าง: ถ้าศัตรูหนีออกไปไกลกว่าระยะโจมตี
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝาง: ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝ๏ฟฝหน๏ฟฝ๏ฟฝอก๏ฟฝ๏ฟฝลก๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
         if (distance > attackRange)
         {
-            // เปลี่ยนสถานะกลับไปเดินไล่ตาม
+            // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝยนสถานะก๏ฟฝับ๏ฟฝ๏ฟฝิน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
             SetState(CharState.WalkToEnemy);
             navAgent.SetDestination(curCharTarget.transform.position);
             navAgent.isStopped = false;
@@ -209,12 +306,12 @@ public abstract class Character : MonoBehaviour
         anim = GetComponent<Animator>();
     }
 
-    // เพิ่มส่วนนี้: เพื่อให้สถานะ Walk ทำงานในทุกเฟรม
+    // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝวน๏ฟฝ๏ฟฝ๏ฟฝ: ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝสถาน๏ฟฝ Walk ๏ฟฝำงานในทุก๏ฟฝ๏ฟฝ๏ฟฝ
 
-    // เพิ่มส่วนนี้: เพื่อให้ RightClick.cs สามารถสั่งให้ตัวละครเดินได้ห
+    // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝวน๏ฟฝ๏ฟฝ๏ฟฝ: ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ RightClick.cs ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝรถ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝะค๏ฟฝ๏ฟฝิน๏ฟฝ๏ฟฝ๏ฟฝ
     public void WalkToPosition(Vector3 position)
     {
-        navAgent.isStopped = false; // สั่งให้ Agent เริ่มทำงานใหม่
+        navAgent.isStopped = false; // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ Agent ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝำงาน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ
         navAgent.SetDestination(position);
         SetState(CharState.Walk);
     }
@@ -223,24 +320,24 @@ public abstract class Character : MonoBehaviour
     {
         state = s;
 
-        // เพิ่มส่วนนี้ตามหัวข้อ 12.9
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝวน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝวข๏ฟฝ๏ฟฝ 12.9
         if (state == CharState.Idle)
         {
-            navAgent.isStopped = true; // หยุดการเคลื่อนที่
-            navAgent.ResetPath();      // ล้างเส้นทางเดิม
+            navAgent.isStopped = true; // ๏ฟฝ๏ฟฝุด๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝอน๏ฟฝ๏ฟฝ๏ฟฝ
+            navAgent.ResetPath();      // ๏ฟฝ๏ฟฝาง๏ฟฝ๏ฟฝ้นทาง๏ฟฝ๏ฟฝ๏ฟฝ
         }
     }
 
     protected void Attack()
     {
-        // สั่งให้ตัวละครหันหน้าไปหาศัตรู
+        // ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝะค๏ฟฝ๏ฟฝันหน๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัต๏ฟฝ๏ฟฝ
         transform.LookAt(curCharTarget.transform);
 
-        // สั่ง Animator ให้เล่นท่าโจมตี (ต้องมี Parameter ชื่อ "Attack" แบบ Trigger ใน Animator)
+        // ๏ฟฝ๏ฟฝ๏ฟฝ Animator ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ่นท๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ (๏ฟฝ๏ฟฝอง๏ฟฝ๏ฟฝ Parameter ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ "Attack" แบบ Trigger ๏ฟฝ Animator)
         anim.SetTrigger("Attack");
         AttackLogic();
 
-        //attack logic (ตรงนี้เดี๋ยวเราค่อยมาเติมโค้ดคำนวณดาเมจทีหลัง)
+        //attack logic (๏ฟฝรง๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝาค๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ้ดคำนวณ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝัง)
     }
 
     protected void WalkUpdate()
