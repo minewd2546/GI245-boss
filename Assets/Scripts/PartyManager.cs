@@ -21,21 +21,36 @@ public class PartyManager : MonoBehaviour
         }
 
         SelectSingleHero(0);
+		// new Magic(รหัสสกิล, "ชื่อสกิล", ระยะยิง, พลังโจมตี, เวลาร่าย(วินาที), เวลาพุ่งชน(วินาที), IDเอฟเฟกต์ตอนร่าย, IDเอฟเฟกต์ตอนยิง);
+        members[0].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[0]));
+		members[0].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[2]));
 
-        members[0].MagicSkills.Add(new Magic(0, "Power Glow", 10f, 20, 3f, 1f, 2, 2));
-        members[1].MagicSkills.Add(new Magic(0, "Fire Ball", 10f, 35, 3f, 4f, 0, 1));
+        members[1].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[1]));
+		members[1].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[3]));
+
+		InventoryManager.instance.AddItem(members[0], 0); // Health Potion
+		InventoryManager.instance.AddItem(members[0], 1); // Sword
+
+		InventoryManager.instance.AddItem(members[1], 0); // Health Potion
+		InventoryManager.instance.AddItem(members[1], 1); // Sword
+		InventoryManager.instance.AddItem(members[1], 2); // Shield
 
         UIManager.instance.ShowMagicToggles();
     }
 
-    void Update()
+	void Update()
     {
         if (Input.GetKeyDown(KeyCode.M))
         {
             if (selectChars.Count > 0)
             {
                 selectChars[0].IsMagicMode = true;
-                selectChars[0].CurMagicCast = selectChars[0].MagicSkills[0];
+                
+                // เพิ่มการตรวจสอบ: ถ้ายังไม่มีการเลือกสกิลไว้ ค่อยให้ค่าเริ่มต้นเป็นสกิลที่ 0
+                if (selectChars[0].CurMagicCast == null)
+                {
+                    selectChars[0].CurMagicCast = selectChars[0].MagicSkills[0];
+                }
             }
         }
     }

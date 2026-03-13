@@ -37,6 +37,32 @@ public abstract class Character : MonoBehaviour
     protected bool isMagicMode = false;
     public bool IsMagicMode
     { get { return isMagicMode; } set { isMagicMode = value; } }
+	
+	[Header("Inventory")]
+
+	[SerializeField]
+	protected Item[] inventoryItems;
+	public Item[] InventoryItems
+	{
+    get { return inventoryItems; }
+    set { inventoryItems = value; }
+	}
+
+	[SerializeField]
+	protected Item mainWeapon;
+	public Item MainWeapon
+	{
+    get { return mainWeapon; }
+    set { mainWeapon = value; }
+	}
+
+	[SerializeField]
+	protected Item shield;
+	public Item Shield
+	{
+    get { return shield; }
+    set { shield = value; }
+	}
 
     protected VFXManager vfxManager;
     protected UIManager uiManager;
@@ -70,6 +96,7 @@ public abstract class Character : MonoBehaviour
     public float FindingRange { get { return findingRange; } }
 
     
+	
     public void ToAttackCharacter(Character target)
     {
         
@@ -131,6 +158,8 @@ public abstract class Character : MonoBehaviour
     {
         vfxManager = vfxM;
         uiManager = uiM;
+		
+		inventoryItems = new Item[16];
     }
     
     protected void AttackLogic()
@@ -191,12 +220,17 @@ public abstract class Character : MonoBehaviour
         }
     }
     
-    private IEnumerator ShootMagicCast(Magic curMagicCast)
+	private IEnumerator ShootMagicCast(Magic curMagicCast)
     {
+        // เพิ่มความสูงให้จุดยิง 0.5f 
+        Vector3 chestOffset = new Vector3(0, 0.5f, 0);
+        Vector3 startPos = transform.position + chestOffset;
+        Vector3 targetPos = curCharTarget.transform.position + chestOffset;
+
         if (vfxManager != null)
             vfxManager.ShootMagic(curMagicCast.ShootID,
-                transform.position,
-                curCharTarget.transform.position,
+                startPos, 
+                targetPos, 
                 curMagicCast.ShootTime);
 
         yield return new WaitForSeconds(curMagicCast.ShootTime);
@@ -210,11 +244,15 @@ public abstract class Character : MonoBehaviour
             uiManager.IsOnCurToggleMagic(false);
     }
 
-    private IEnumerator LoadMagicCast(Magic curMagicCast)
+	private IEnumerator LoadMagicCast(Magic curMagicCast)
     {
+        // เพิ่มความสูงให้จุดโหลดเวทย์ 0.5f
+        Vector3 chestOffset = new Vector3(0, 0.5f, 0);
+        Vector3 startPos = transform.position + chestOffset;
+
         if (vfxManager != null)
             vfxManager.LoadMagic(curMagicCast.LoadID,
-                transform.position,
+                startPos, 
                 curMagicCast.LoadTime);
 
         yield return new WaitForSeconds(curMagicCast.LoadTime);
