@@ -17,7 +17,7 @@ public class PartyManager : MonoBehaviour
     {
         foreach (Character c in members)
         {
-            c.charInit(VFXManager.instance, UIManager.instance);
+            c.charInit(VFXManager.instance, UIManager.instance, InventoryManager.instance);
         }
 
         SelectSingleHero(0);
@@ -27,13 +27,22 @@ public class PartyManager : MonoBehaviour
 
         members[1].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[1]));
 		members[1].MagicSkills.Add(new Magic(VFXManager.instance.MagicData[3]));
-
+        
+        // Member 1
 		InventoryManager.instance.AddItem(members[0], 0); // Health Potion
 		InventoryManager.instance.AddItem(members[0], 1); // Sword
-
-		InventoryManager.instance.AddItem(members[1], 0); // Health Potion
-		InventoryManager.instance.AddItem(members[1], 1); // Sword
-		InventoryManager.instance.AddItem(members[1], 2); // Shield
+        
+        // Member 2
+        InventoryManager.instance.AddItem(members[1], 0); // Healing Potion
+        InventoryManager.instance.AddItem(members[1], 1); // Sword
+        InventoryManager.instance.AddItem(members[1], 2); // Shield
+        InventoryManager.instance.AddItem(members[1], 3); // Mana Potion
+        InventoryManager.instance.AddItem(members[1], 4); // Crystal
+        InventoryManager.instance.AddItem(members[1], 5); // Raw Turkey
+        InventoryManager.instance.AddItem(members[1], 6); // Necklace
+        InventoryManager.instance.AddItem(members[1], 7); // Key
+        InventoryManager.instance.AddItem(members[1], 8); // Gem
+        InventoryManager.instance.AddItem(members[1], 9); // Ring
 
         UIManager.instance.ShowMagicToggles();
     }
@@ -73,6 +82,7 @@ public class PartyManager : MonoBehaviour
 
         selectChars.Add(members[i]);
         selectChars[0].ToggleRingSelection(true);
+        UIManager.instance.ShowMagicToggles();
     }
     
     void Awake()

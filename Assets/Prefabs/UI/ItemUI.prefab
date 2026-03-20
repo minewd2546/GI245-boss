@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 828254075675047957}
   - component: {fileID: 6447904655499374353}
   - component: {fileID: 6288350748583583389}
+  - component: {fileID: 8330373999031567019}
   m_Layer: 5
   m_Name: ItemUI
   m_TagString: Untagged
@@ -75,3 +76,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8330373999031567019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7189663858924163376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b95f7caf7f38b54aaafb6f090bde252, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDrag

@@ -13,7 +13,7 @@ public class RightClick : MonoBehaviour
     {
         instance = this;
         cam = Camera.main;
-        layerMask = LayerMask.GetMask("Ground", "Character", "Building");
+        layerMask = LayerMask.GetMask("Ground", "Character", "Building", "Item");
     }
 
     // Update is called once per frame
@@ -33,6 +33,16 @@ public class RightClick : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, 1000, layerMask))
         {
+            ItemPick itemPick = hit.collider.GetComponent<ItemPick>();
+            if (itemPick == null)
+                itemPick = hit.collider.GetComponentInParent<ItemPick>();
+
+            if (itemPick != null)
+            {
+                itemPick.TryPickUpSelectedHero();
+                return;
+            }
+
             switch (hit.collider.tag)
             {
                 case "Ground":

@@ -66,6 +66,7 @@ public abstract class Character : MonoBehaviour
 
     protected VFXManager vfxManager;
     protected UIManager uiManager;
+    protected InventoryManager invManager;
     
     [SerializeField]
     protected CharState state;
@@ -154,12 +155,13 @@ public abstract class Character : MonoBehaviour
         }
     }
     
-    public void charInit(VFXManager vfxM , UIManager uiM)
+    public void charInit(VFXManager vfxM , UIManager uiM, InventoryManager invM)
     {
         vfxManager = vfxM;
         uiManager = uiM;
+        invManager = invM;
 		
-		inventoryItems = new Item[16];
+		inventoryItems = new Item[InventoryManager.MAXSLOT];
     }
     
     protected void AttackLogic()
@@ -190,6 +192,8 @@ public abstract class Character : MonoBehaviour
 
         // ��� Animation ��ҵ�� (��ͧ�� Trigger ���� "Die" � Animator)
         anim.SetTrigger("Die");
+
+        invManager.SpawnDropInventory(inventoryItems, transform.position);
 
         // ������Ѻ�����ѧ����� Object (���¡��ѧ��ѹ�����������¹仡�͹˹��)
         StartCoroutine(DestroyObject());
@@ -387,3 +391,5 @@ public abstract class Character : MonoBehaviour
             SetState(CharState.Idle);
     }
 }
+
+

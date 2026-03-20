@@ -35,6 +35,7 @@ public class LeftClick : MonoBehaviour
     {
         ClearRingSelection();
         PartyManager.instance.SelectChars.Clear();
+        UIManager.instance.ShowMagicToggles();
     }
 
     // Update is called once per frame
