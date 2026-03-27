@@ -56,6 +56,12 @@ public abstract class Character : MonoBehaviour
     set { mainWeapon = value; }
 	}
 
+    [SerializeField]
+    protected Transform weaponHand;
+
+    [SerializeField]
+    protected GameObject weaponObj;
+
 	[SerializeField]
 	protected Item shield;
 	public Item Shield
@@ -63,6 +69,15 @@ public abstract class Character : MonoBehaviour
     get { return shield; }
     set { shield = value; }
 	}
+
+    [SerializeField]
+    protected Transform shieldHand;
+
+    [SerializeField]
+    protected GameObject shieldObj;
+
+    [SerializeField]
+    protected int defensePower = 0;
 
     protected VFXManager vfxManager;
     protected UIManager uiManager;
@@ -76,9 +91,11 @@ public abstract class Character : MonoBehaviour
     protected GameObject ringSelection;
     public GameObject RingSelection { get { return ringSelection; } }
 
-    
     [SerializeField] protected int curHP = 10;
     public int CurHP { get { return curHP; } }
+
+    [SerializeField] protected int maxHP = 100;
+    public int MaxHP { get { return maxHP; } }
 
     [SerializeField]
     protected Character curCharTarget; 
@@ -93,7 +110,7 @@ public abstract class Character : MonoBehaviour
     [SerializeField] protected float attackCoolDown = 2f;
 
     [SerializeField] protected float attackTimer = 0f;
-    [SerializeField] protected float findingRange = 20f; // ���Ф����ѵ�� (�� 20 ����)
+    [SerializeField] protected float findingRange = 20f;
     public float FindingRange { get { return findingRange; } }
 
     
@@ -104,10 +121,8 @@ public abstract class Character : MonoBehaviour
         if (curHP <= 0 || state == CharState.Die)
             return;
 
-        // ��ͤ�������
         curCharTarget = target;
 
-        // ������ NavMeshAgent �Թ��ѧ���˹觢ͧ�������
         navAgent.SetDestination(target.transform.position);
         navAgent.isStopped = false;
         
@@ -121,11 +136,9 @@ public abstract class Character : MonoBehaviour
     {
         string myTag = gameObject.tag;
 
-        // �������� Hero �����ͻ��ª��� Enemy -> ���ѵ��
         if ((myTag == "Hero" || myTag == "Player") && targetTag == "Enemy")
             return true;
 
-        // �������� Enemy �����ͻ��ª��� Hero -> ���ѵ��
         if (myTag == "Enemy" && (targetTag == "Hero" || targetTag == "Player"))
             return true;
 
@@ -140,21 +153,101 @@ public abstract class Character : MonoBehaviour
 
     public void ReceiveDamage(int damage)
     {
-        // ��ҵ���������� ����ͧ�Ѻ���������
         if (curHP <= 0 || state == CharState.Die)
             return;
 
-        // Ŵ���ʹ�����ѧ���բͧ�ѵ��
-        curHP -= damage;
+        int damageAfter = damage - defensePower;
 
-        // ������ʹ���
+        if (damageAfter < 0)
+            damageAfter = 0;
+
+        curHP -= damageAfter;
+
         if (curHP <= 0)
         {
             curHP = 0;
-            Die(); // ���¡�ѧ��ѹ���
+            Die();
         }
     }
-    
+
+    public void Recover(int n)
+    {
+        curHP += n;
+
+        if (curHP > maxHP)
+            curHP = maxHP;
+    }
+
+    public void EquipShield(Item item)
+    {
+        if (item == null || invManager == null || invManager.ItemPrefabs == null)
+            return;
+
+        if (item.PrefabID < 0 || item.PrefabID >= invManager.ItemPrefabs.Length)
+        {
+            Debug.LogError("Shield prefabID is out of range: " + item.PrefabID);
+            return;
+        }
+
+        if (shieldHand == null)
+        {
+            Debug.LogError("ShieldHand is not assigned on " + gameObject.name);
+            return;
+        }
+
+        shieldObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], shieldHand);
+
+        shieldObj.transform.localPosition = new Vector3(-8.5f, -4f, 3f);
+        shieldObj.transform.Rotate(-90f, 0f, 180f, Space.Self);
+
+        defensePower += item.Power;
+        shield = item;
+    }
+
+    public void EquipWeapon(Item item)
+    {
+        if (item == null || invManager == null || invManager.ItemPrefabs == null)
+            return;
+
+        if (item.PrefabID < 0 || item.PrefabID >= invManager.ItemPrefabs.Length)
+        {
+            Debug.LogError("Weapon prefabID is out of range: " + item.PrefabID);
+            return;
+        }
+
+        if (weaponHand == null)
+        {
+            Debug.LogError("WeaponHand is not assigned on " + gameObject.name);
+            return;
+        }
+
+        weaponObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], weaponHand);
+
+        weaponObj.transform.localPosition = new Vector3(0f, 0f, 0f);
+        attackDamage += item.Power;
+        mainWeapon = item;
+    }
+
+    public void UnEquipShield()
+    {
+        if (shield != null)
+        {
+            defensePower -= shield.Power;
+            shield = null;
+            Destroy(shieldObj);
+        }
+    }
+
+    public void UnEquipWeapon()
+    {
+        if (mainWeapon != null)
+        {
+            attackDamage -= mainWeapon.Power;
+            mainWeapon = null;
+            Destroy(weaponObj);
+        }
+    }
+
     public void charInit(VFXManager vfxM , UIManager uiM, InventoryManager invM)
     {
         vfxManager = vfxM;
@@ -166,10 +259,8 @@ public abstract class Character : MonoBehaviour
     
     protected void AttackLogic()
     {
-        // �֧����๹�� Character �ͧ��������͡��
         Character target = curCharTarget.GetComponent<Character>();
 
-        // �����������������ԧ ������Ŵ���ʹ
         if (target != null)
         {
             target.ReceiveDamage(attackDamage);
@@ -186,47 +277,38 @@ public abstract class Character : MonoBehaviour
     
     protected virtual void Die()
     {
-        // ��ش�������͹���
         navAgent.isStopped = true;
         SetState(CharState.Die);
 
-        // ��� Animation ��ҵ�� (��ͧ�� Trigger ���� "Die" � Animator)
         anim.SetTrigger("Die");
 
         invManager.SpawnDropInventory(inventoryItems, transform.position);
 
-        // ������Ѻ�����ѧ����� Object (���¡��ѧ��ѹ�����������¹仡�͹˹��)
         StartCoroutine(DestroyObject());
     }
 
 
     protected void WalkToEnemyUpdate()
     {
-        // �������������� ����Ѻ�ʶҹ� Idle
         if (curCharTarget == null)
         {
             SetState(CharState.Idle);
             return;
         }
 
-        // �ѻവ���˹�������������ѵ�٢�Ѻ˹�
         navAgent.SetDestination(curCharTarget.transform.position);
 
-        // �ӹǳ������ҧ�����ҧ�����ҡѺ�������
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
-        // ������������������ �������¹��ʶҹ� Attack
         if (distance <= attackRange)
         {
             SetState(CharState.Attack);
             Attack();
-            // //First Attack
         }
     }
     
 	private IEnumerator ShootMagicCast(Magic curMagicCast)
     {
-        // เพิ่มความสูงให้จุดยิง 0.5f 
         Vector3 chestOffset = new Vector3(0, 0.5f, 0);
         Vector3 startPos = transform.position + chestOffset;
         Vector3 targetPos = curCharTarget.transform.position + chestOffset;
@@ -239,7 +321,6 @@ public abstract class Character : MonoBehaviour
 
         yield return new WaitForSeconds(curMagicCast.ShootTime);
 
-        //cast logic
         MagicCastLogic(curMagicCast);
         isMagicMode = false;
 
@@ -250,7 +331,6 @@ public abstract class Character : MonoBehaviour
 
 	private IEnumerator LoadMagicCast(Magic curMagicCast)
     {
-        // เพิ่มความสูงให้จุดโหลดเวทย์ 0.5f
         Vector3 chestOffset = new Vector3(0, 0.5f, 0);
         Vector3 startPos = transform.position + chestOffset;
 
@@ -293,22 +373,20 @@ public abstract class Character : MonoBehaviour
             MagicCast(curMagicCast);
         }
     }
+
     protected void AttackUpdate()
     {
         if (curCharTarget == null)
             return;
 
-        // ����ѵ�ٵ������ (HP ���) ��������ش��С�Ѻ��׹���
         if (curCharTarget.CurHP <= 0)
         {
             SetState(CharState.Idle);
             return;
         }
 
-        // ������ NavMeshAgent ��ش�Թ (�����׹�ѹ)
         navAgent.isStopped = true;
 
-        // �Ѻ���Ҷ����ѧ����Ѻ������դ��駶Ѵ� (Cooldown)
         attackTimer += Time.deltaTime;
         if (attackTimer >= attackCoolDown)
         {
@@ -316,12 +394,10 @@ public abstract class Character : MonoBehaviour
             Attack();
         }
 
-        // ��������ҧ: ����ѵ��˹��͡��š�����������
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
         if (distance > attackRange)
         {
-            // ����¹ʶҹС�Ѻ��Թ�����
             SetState(CharState.WalkToEnemy);
             navAgent.SetDestination(curCharTarget.transform.position);
             navAgent.isStopped = false;
@@ -331,7 +407,6 @@ public abstract class Character : MonoBehaviour
 
     public void ToggleRingSelection(bool flag)
     {
-        // Add this 'if' statement to check if ringSelection exists before using it
         if (ringSelection != null)
         {
             ringSelection.SetActive(flag);
@@ -348,12 +423,9 @@ public abstract class Character : MonoBehaviour
         anim = GetComponent<Animator>();
     }
 
-    // ������ǹ���: �������ʶҹ� Walk �ӧҹ㹷ء���
-
-    // ������ǹ���: ������� RightClick.cs ����ö���������Ф��Թ���
     public void WalkToPosition(Vector3 position)
     {
-        navAgent.isStopped = false; // ������ Agent ������ӧҹ����
+        navAgent.isStopped = false;
         navAgent.SetDestination(position);
         SetState(CharState.Walk);
     }
@@ -362,24 +434,19 @@ public abstract class Character : MonoBehaviour
     {
         state = s;
 
-        // ������ǹ�������Ǣ�� 12.9
         if (state == CharState.Idle)
         {
-            navAgent.isStopped = true; // ��ش�������͹���
-            navAgent.ResetPath();      // ��ҧ��鹷ҧ���
+            navAgent.isStopped = true;
+            navAgent.ResetPath();
         }
     }
 
     protected void Attack()
     {
-        // ���������Ф��ѹ˹������ѵ��
         transform.LookAt(curCharTarget.transform);
 
-        // ��� Animator �����蹷������ (��ͧ�� Parameter ���� "Attack" Ẻ Trigger � Animator)
         anim.SetTrigger("Attack");
         AttackLogic();
-
-        //attack logic (�ç����������Ҥ���������鴤ӹǳ���������ѧ)
     }
 
     protected void WalkUpdate()
@@ -391,5 +458,3 @@ public abstract class Character : MonoBehaviour
             SetState(CharState.Idle);
     }
 }
-
-

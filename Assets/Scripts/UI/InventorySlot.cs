@@ -12,6 +12,14 @@ public class InventorySlot : MonoBehaviour, IDropHandler
     }
 
     [SerializeField]
+    private ItemType itemType;
+    public ItemType ItemType
+    {
+        get { return itemType; }
+        set { itemType = value; }
+    }
+
+    [SerializeField]
     private InventoryManager inventoryManager;
 
     void Start()
@@ -35,10 +43,12 @@ public class InventorySlot : MonoBehaviour, IDropHandler
         if (slotA == null)
             return;
 
-        // ลบ Item A ออกจากช่องเดิม
-        inventoryManager.RemoveItemInBag(slotA.ID);
+        if (itemType == ItemType.Shield || itemType == ItemType.Weapon)
+        {
+            if (itemDragA.Item.Type != itemType)
+                return;
+        }
 
-        // ถ้าช่องปลายทางมีของอยู่แล้ว ให้สลับกลับไปช่องเดิม
         if (transform.childCount > 0)
         {
             GameObject objB = transform.GetChild(0).gameObject;
@@ -46,14 +56,27 @@ public class InventorySlot : MonoBehaviour, IDropHandler
 
             if (itemDragB != null)
             {
+                if (slotA.ItemType == ItemType.Shield || slotA.ItemType == ItemType.Weapon)
+                {
+                    if (itemDragB.Item.Type != slotA.ItemType)
+                        return;
+                }
+
+                inventoryManager.RemoveItemInBag(slotA.ID);
+
                 itemDragB.transform.SetParent(itemDragA.IconParent);
                 itemDragB.transform.localPosition = Vector3.zero;
                 itemDragB.IconParent = itemDragA.IconParent;
                 inventoryManager.SaveItemInBag(slotA.ID, itemDragB.Item);
+
+                inventoryManager.RemoveItemInBag(id);
             }
         }
+        else
+        {
+            inventoryManager.RemoveItemInBag(slotA.ID);
+        }
 
-        // ย้าย Item A มาช่องนี้
         itemDragA.IconParent = transform;
         itemDragA.transform.SetParent(transform);
         itemDragA.transform.localPosition = Vector3.zero;

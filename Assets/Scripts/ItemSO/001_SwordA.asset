@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   id: 1
   itemName: Sword
-  type: 2
+  type: 4
   icon: {fileID: 21300000, guid: 216c83c731d1a1044bb355e74c44c004, type: 3}
   power: 20
+  prefabID: 5

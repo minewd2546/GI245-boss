@@ -31,12 +31,14 @@ public class PartyManager : MonoBehaviour
         // Member 1
 		InventoryManager.instance.AddItem(members[0], 0); // Health Potion
 		InventoryManager.instance.AddItem(members[0], 1); // Sword
+        InventoryManager.instance.AddItem(members[0], 11); // Sword
         
         // Member 2
         InventoryManager.instance.AddItem(members[1], 0); // Healing Potion
         InventoryManager.instance.AddItem(members[1], 1); // Sword
         InventoryManager.instance.AddItem(members[1], 2); // Shield
         InventoryManager.instance.AddItem(members[1], 3); // Mana Potion
+        InventoryManager.instance.AddItem(members[1], 10); // Shield B
         InventoryManager.instance.AddItem(members[1], 4); // Crystal
         InventoryManager.instance.AddItem(members[1], 5); // Raw Turkey
         InventoryManager.instance.AddItem(members[1], 6); // Necklace

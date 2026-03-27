@@ -18,7 +18,7 @@ public class InventoryManager : MonoBehaviour
         set { itemData = value; }
     }
 
-    public const int MAXSLOT = 16;
+    public const int MAXSLOT = 18;
     public static InventoryManager instance;
 
     public bool AddItem(Character character, int id)
@@ -51,6 +51,16 @@ public class InventoryManager : MonoBehaviour
             return;
 
         PartyManager.instance.SelectChars[0].InventoryItems[index] = item;
+
+        switch (index)
+        {
+            case 16:
+                PartyManager.instance.SelectChars[0].EquipWeapon(item);
+                break;
+            case 17:
+                PartyManager.instance.SelectChars[0].EquipShield(item);
+                break;
+        }
     }
 
     public void RemoveItemInBag(int index)
@@ -59,6 +69,28 @@ public class InventoryManager : MonoBehaviour
             return;
 
         PartyManager.instance.SelectChars[0].InventoryItems[index] = null;
+
+        switch (index)
+        {
+            case 16:
+                PartyManager.instance.SelectChars[0].UnEquipWeapon();
+                break;
+            case 17:
+                PartyManager.instance.SelectChars[0].UnEquipShield();
+                break;
+        }
+    }
+
+    public void DrinkConsumableItem(Item item, int slotId)
+    {
+        string s = string.Format("Drink: {0}", item.ItemName);
+        Debug.Log(s);
+
+        if (PartyManager.instance.SelectChars.Count > 0)
+        {
+            PartyManager.instance.SelectChars[0].Recover(item.Power);
+            RemoveItemInBag(slotId);
+        }
     }
 
     private void SpawnDropItem(Item item, Vector3 pos)
