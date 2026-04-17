@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour, IDropHandler
 {
@@ -22,9 +23,29 @@ public class InventorySlot : MonoBehaviour, IDropHandler
     [SerializeField]
     private InventoryManager inventoryManager;
 
+    private ItemDrag FindItemDragChild()
+    {
+        ItemDrag[] drags = GetComponentsInChildren<ItemDrag>(true);
+        for (int i = 0; i < drags.Length; i++)
+        {
+            if (drags[i].transform.parent == transform)
+                return drags[i];
+        }
+
+        return null;
+    }
+
     void Start()
     {
         inventoryManager = InventoryManager.instance;
+
+        // Decorative UI inside a slot should not block drag/drop events.
+        Graphic[] childGraphics = GetComponentsInChildren<Graphic>(true);
+        for (int i = 0; i < childGraphics.Length; i++)
+        {
+            if (childGraphics[i].gameObject != gameObject && childGraphics[i].GetComponentInParent<ItemDrag>() == null)
+                childGraphics[i].raycastTarget = false;
+        }
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -49,28 +70,24 @@ public class InventorySlot : MonoBehaviour, IDropHandler
                 return;
         }
 
-        if (transform.childCount > 0)
+        ItemDrag itemDragB = FindItemDragChild();
+
+        if (itemDragB != null && itemDragB.gameObject != objA)
         {
-            GameObject objB = transform.GetChild(0).gameObject;
-            ItemDrag itemDragB = objB.GetComponent<ItemDrag>();
-
-            if (itemDragB != null)
+            if (slotA.ItemType == ItemType.Shield || slotA.ItemType == ItemType.Weapon)
             {
-                if (slotA.ItemType == ItemType.Shield || slotA.ItemType == ItemType.Weapon)
-                {
-                    if (itemDragB.Item.Type != slotA.ItemType)
-                        return;
-                }
-
-                inventoryManager.RemoveItemInBag(slotA.ID);
-
-                itemDragB.transform.SetParent(itemDragA.IconParent);
-                itemDragB.transform.localPosition = Vector3.zero;
-                itemDragB.IconParent = itemDragA.IconParent;
-                inventoryManager.SaveItemInBag(slotA.ID, itemDragB.Item);
-
-                inventoryManager.RemoveItemInBag(id);
+                if (itemDragB.Item.Type != slotA.ItemType)
+                    return;
             }
+
+            inventoryManager.RemoveItemInBag(slotA.ID);
+
+            itemDragB.transform.SetParent(itemDragA.IconParent);
+            itemDragB.transform.localPosition = Vector3.zero;
+            itemDragB.IconParent = itemDragA.IconParent;
+            inventoryManager.SaveItemInBag(slotA.ID, itemDragB.Item);
+
+            inventoryManager.RemoveItemInBag(id);
         }
         else
         {

@@ -1,22 +1,20 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject[] itemPrefabs;
+    [SerializeField] private GameObject[] itemPrefabs;
     public GameObject[] ItemPrefabs
     {
-        get { return itemPrefabs; }
-        set { itemPrefabs = value; }
+        get => itemPrefabs;
+        set => itemPrefabs = value;
     }
 
-    [SerializeField]
-    private ItemData[] itemData;
+    [SerializeField] private ItemData[] itemData;
     public ItemData[] ItemData
     {
-        get { return itemData; }
-        set { itemData = value; }
+        get => itemData;
+        set => itemData = value;
     }
 
     public const int MAXSLOT = 18;
@@ -30,7 +28,7 @@ public class InventoryManager : MonoBehaviour
 
     public bool AddItem(Character character, Item item)
     {
-        if (character == null || item == null)
+        if (character == null || item == null || character.InventoryItems == null)
             return false;
 
         for (int i = 0; i < character.InventoryItems.Length; i++)
@@ -44,6 +42,29 @@ public class InventoryManager : MonoBehaviour
 
         Debug.Log("Inventory Full");
         return false;
+    }
+
+    public bool AddItemToShop(Npc npc, int id)
+    {
+        if (npc == null || id < 0 || id >= itemData.Length)
+            return false;
+
+        return npc.AddShopItem(new Item(itemData[id]));
+    }
+
+    private void AddItemShopToNPC(int npcId, int itemId)
+    {
+        if (QuestManager.instance == null || QuestManager.instance.NPCPerson == null)
+            return;
+
+        if (npcId < 0 || npcId >= QuestManager.instance.NPCPerson.Length)
+            return;
+
+        Npc npc = QuestManager.instance.NPCPerson[npcId];
+        if (npc == null)
+            return;
+
+        AddItemToShop(npc, itemId);
     }
 
     public void SaveItemInBag(int index, Item item)
@@ -84,8 +105,8 @@ public class InventoryManager : MonoBehaviour
 
     public void DrinkConsumableItem(Item item, int slotId)
     {
-        string s = string.Format("Drink: {0}", item.ItemName);
-        Debug.Log(s);
+        if (item == null)
+            return;
 
         if (PartyManager.instance.SelectChars.Count > 0)
         {
@@ -96,17 +117,14 @@ public class InventoryManager : MonoBehaviour
 
     public bool CheckPartyForItem(int id)
     {
-        Item item = new Item(itemData[id]);
-        Debug.Log(item.ItemName);
-
         List<Character> party = PartyManager.instance.Members;
 
         foreach (Character hero in party)
         {
             for (int i = 0; i < hero.InventoryItems.Length; i++)
             {
-                Debug.Log(hero.InventoryItems[i].ItemName);
-                if (hero.InventoryItems[i].ID == item.ID)
+                Item inventoryItem = hero.InventoryItems[i];
+                if (inventoryItem != null && inventoryItem.ID == id)
                     return true;
             }
         }
@@ -116,9 +134,6 @@ public class InventoryManager : MonoBehaviour
 
     public bool RemoveItemFromParty(int id)
     {
-        Item item = new Item(itemData[id]);
-        Debug.Log($"Finding {item.ItemName}");
-
         List<Character> party = PartyManager.instance.Members;
 
         foreach (Character hero in party)
@@ -128,11 +143,9 @@ public class InventoryManager : MonoBehaviour
                 if (hero.InventoryItems[i] == null)
                     continue;
 
-                if (hero.InventoryItems[i].ID == item.ID)
+                if (hero.InventoryItems[i].ID == id)
                 {
-                    Debug.Log($"Removing {hero.InventoryItems[i].ItemName}");
                     hero.InventoryItems[i] = null;
-                    Debug.Log($"Removed {hero.InventoryItems[i]}");
                     return true;
                 }
             }
@@ -143,18 +156,7 @@ public class InventoryManager : MonoBehaviour
 
     private void SpawnDropItem(Item item, Vector3 pos)
     {
-        int id;
-
-        switch (item.Type)
-        {
-            case ItemType.Consumable:
-                id = 1;
-                break;
-            default:
-                id = 0;
-                break;
-        }
-
+        int id = item.Type == ItemType.Consumable ? 1 : 0;
         GameObject itemPrefab = ItemPrefabs[id];
         Vector3 dropPos = pos;
 
@@ -175,6 +177,9 @@ public class InventoryManager : MonoBehaviour
 
     public void SpawnDropInventory(Item[] items, Vector3 pos)
     {
+        if (items == null)
+            return;
+
         for (int i = 0; i < items.Length; i++)
         {
             if (items[i] != null)
@@ -194,13 +199,18 @@ public class InventoryManager : MonoBehaviour
         obj.layer = layer;
 
         foreach (Transform child in obj.transform)
-        {
             SetLayerRecursively(child.gameObject, layer);
-        }
     }
 
     void Awake()
     {
         instance = this;
+    }
+
+    void Start()
+    {
+        AddItemShopToNPC(1, 0); // healing potion
+        AddItemShopToNPC(1, 10); // shield B
+        AddItemShopToNPC(1, 12); // magic potion
     }
 }

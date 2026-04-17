@@ -3,12 +3,8 @@ using UnityEngine;
 
 public class EnemyManager : MonoBehaviour
 {
-    [SerializeField]
-    private List<Enemy> monsters;
-    public List<Enemy> Monsters
-    {
-        get { return monsters; }
-    }
+    [SerializeField] private List<Enemy> monsters;
+    public List<Enemy> Monsters => monsters;
 
     public static EnemyManager instance;
 
@@ -20,12 +16,13 @@ public class EnemyManager : MonoBehaviour
     void Start()
     {
         foreach (Character m in monsters)
-        {
-            m.charInit(VFXManager.instance, UIManager.instance, InventoryManager.instance);
-        }
+            m.CharInit(VFXManager.instance, UIManager.instance, InventoryManager.instance, PartyManager.instance);
 
-        InventoryManager.instance.AddItem(monsters[0], 0); // Health Potion
-        InventoryManager.instance.AddItem(monsters[0], 1); // Sword
-        InventoryManager.instance.AddItem(monsters[0], 2); // Shield
+        if (monsters.Count > 0)
+        {
+            InventoryManager.instance.AddItem(monsters[0], 0);
+            InventoryManager.instance.AddItem(monsters[0], 1);
+            InventoryManager.instance.AddItem(monsters[0], 2);
+        }
     }
 }

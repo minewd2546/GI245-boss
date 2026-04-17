@@ -2,6 +2,17 @@ using UnityEngine;
 
 public class Enemy : Character
 {
+    [SerializeField] private int expDrop = 10;
+    public int ExpDrop => expDrop;
+
+    protected override void Die()
+    {
+        if (partyManager != null)
+            partyManager.ShareExpToParty(expDrop);
+
+        base.Die();
+    }
+
     void Update()
     {
         switch (state)
@@ -13,7 +24,7 @@ public class Enemy : Character
                 WalkToEnemyUpdate();
                 break;
             case CharState.Attack:
-                AttackUpdate(); // <--- ส่วนที่เพิ่มเข้ามาครับ
+                AttackUpdate();
                 break;
         }
     }

@@ -9,4 +9,5 @@ public class ItemData : ScriptableObject
     public Sprite icon;
     public int power;
     public int prefabID;
+    public int normalPrice = 10;
 }

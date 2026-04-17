@@ -16,144 +16,145 @@ public enum CharState
     WalkToNPC
 }
 
-
 public abstract class Character : MonoBehaviour
 {
     protected NavMeshAgent navAgent;
-
     protected Animator anim;
-    public Animator Anim { get { return anim; } }
 
-    [SerializeField]
-    protected Sprite avatarPic;
-    public Sprite AvatarPic { get { return avatarPic; } }
+    public Animator Anim => anim;
 
-    [SerializeField]
-    protected string charName;
-    public string CharName { get { return charName; } }
+    [SerializeField] protected Sprite avatarPic;
+    public Sprite AvatarPic => avatarPic;
 
-    [SerializeField]
-    protected List<Magic> magicSkills = new List<Magic>();
+    [SerializeField] protected string charName;
+    public string CharName => charName;
+
+    [SerializeField] protected List<Magic> magicSkills = new List<Magic>();
     public List<Magic> MagicSkills
-    { get { return magicSkills; } set { magicSkills = value; } }
+    {
+        get => magicSkills;
+        set => magicSkills = value;
+    }
 
-    [SerializeField]
-    protected Magic curMagicCast = null;
+    [SerializeField] protected Magic curMagicCast;
     public Magic CurMagicCast
-    { get { return curMagicCast; } set { curMagicCast = value; } }
+    {
+        get => curMagicCast;
+        set => curMagicCast = value;
+    }
 
-    [SerializeField]
-    protected bool isMagicMode = false;
+    [SerializeField] protected bool isMagicMode;
     public bool IsMagicMode
-    { get { return isMagicMode; } set { isMagicMode = value; } }
-	
-	[Header("Inventory")]
+    {
+        get => isMagicMode;
+        set => isMagicMode = value;
+    }
 
-	[SerializeField]
-	protected Item[] inventoryItems;
-	public Item[] InventoryItems
-	{
-    get { return inventoryItems; }
-    set { inventoryItems = value; }
-	}
+    [Header("Inventory")]
+    [SerializeField] protected Item[] inventoryItems;
+    public Item[] InventoryItems
+    {
+        get => inventoryItems;
+        set => inventoryItems = value;
+    }
 
-	[SerializeField]
-	protected Item mainWeapon;
-	public Item MainWeapon
-	{
-    get { return mainWeapon; }
-    set { mainWeapon = value; }
-	}
+    [SerializeField] protected Item mainWeapon;
+    public Item MainWeapon
+    {
+        get => mainWeapon;
+        set => mainWeapon = value;
+    }
 
-    [SerializeField]
-    protected Transform weaponHand;
+    [SerializeField] protected Transform weaponHand;
+    [SerializeField] protected GameObject weaponObj;
 
-    [SerializeField]
-    protected GameObject weaponObj;
+    [SerializeField] protected Item shield;
+    public Item Shield
+    {
+        get => shield;
+        set => shield = value;
+    }
 
-	[SerializeField]
-	protected Item shield;
-	public Item Shield
-	{
-    get { return shield; }
-    set { shield = value; }
-	}
+    [SerializeField] protected Transform shieldHand;
+    [SerializeField] protected GameObject shieldObj;
 
-    [SerializeField]
-    protected Transform shieldHand;
-
-    [SerializeField]
-    protected GameObject shieldObj;
-
-    [SerializeField]
-    protected int defensePower = 0;
+    [SerializeField] protected int defensePower;
+    public int DefensePower
+    {
+        get => defensePower;
+        set => defensePower = Mathf.Max(0, value);
+    }
 
     protected VFXManager vfxManager;
     protected UIManager uiManager;
     protected InventoryManager invManager;
-    
-    [SerializeField]
-    protected CharState state;
-    public CharState State { get { return state; } }
+    protected PartyManager partyManager;
 
-    [SerializeField]
-    protected GameObject ringSelection;
-    public GameObject RingSelection { get { return ringSelection; } }
+    [SerializeField] protected CharState state;
+    public CharState State => state;
+
+    [SerializeField] protected GameObject ringSelection;
+    public GameObject RingSelection => ringSelection;
 
     [SerializeField] protected int curHP = 10;
-    public int CurHP { get { return curHP; } }
+    public int CurHP
+    {
+        get => curHP;
+        set => curHP = Mathf.Clamp(value, 0, maxHP);
+    }
 
     [SerializeField] protected int maxHP = 100;
-    public int MaxHP { get { return maxHP; } }
+    public int MaxHP
+    {
+        get => maxHP;
+        set => maxHP = Mathf.Max(1, value);
+    }
 
-    [SerializeField]
-    protected Character curCharTarget; 
+    [SerializeField] protected Character curCharTarget;
+    public Character CurCharTarget
+    {
+        get => curCharTarget;
+        set => curCharTarget = value;
+    }
 
-    
-    public Character CurCharTarget { get { return curCharTarget; } set { curCharTarget = value; } }
     [SerializeField] protected int attackDamage = 3;
+    public int AttackDamage
+    {
+        get => attackDamage;
+        set => attackDamage = Mathf.Max(0, value);
+    }
 
     [SerializeField] protected float attackRange = 2f;
-    public float AttackRange { get { return attackRange; } }
+    public float AttackRange => attackRange;
 
     [SerializeField] protected float attackCoolDown = 2f;
-
-    [SerializeField] protected float attackTimer = 0f;
+    [SerializeField] protected float attackTimer;
     [SerializeField] protected float findingRange = 20f;
-    public float FindingRange { get { return findingRange; } }
+    public float FindingRange => findingRange;
 
-    
-	
     public void ToAttackCharacter(Character target)
     {
-        
-        if (curHP <= 0 || state == CharState.Die)
+        if (target == null || curHP <= 0 || state == CharState.Die)
             return;
 
         curCharTarget = target;
-
         navAgent.SetDestination(target.transform.position);
         navAgent.isStopped = false;
-        
+
         if (isMagicMode)
             SetState(CharState.WalkToMagicCast);
         else
             SetState(CharState.WalkToEnemy);
     }
 
-    // move to NPC
     public void ToTalkToNPC(Character npc)
     {
-        if (curHP <= 0 || state == CharState.Die)
+        if (npc == null || curHP <= 0 || state == CharState.Die)
             return;
 
-        // lock target
         curCharTarget = npc;
-
-        // start walking to enemy
         navAgent.SetDestination(npc.transform.position);
         navAgent.isStopped = false;
-
         SetState(CharState.WalkToNPC);
     }
 
@@ -182,7 +183,6 @@ public abstract class Character : MonoBehaviour
             return;
 
         int damageAfter = damage - defensePower;
-
         if (damageAfter < 0)
             damageAfter = 0;
 
@@ -198,7 +198,6 @@ public abstract class Character : MonoBehaviour
     public void Recover(int n)
     {
         curHP += n;
-
         if (curHP > maxHP)
             curHP = maxHP;
     }
@@ -220,8 +219,9 @@ public abstract class Character : MonoBehaviour
             return;
         }
 
-        shieldObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], shieldHand);
+        UnEquipShield();
 
+        shieldObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], shieldHand);
         shieldObj.transform.localPosition = new Vector3(-8.5f, -4f, 3f);
         shieldObj.transform.Rotate(-90f, 0f, 180f, Space.Self);
 
@@ -246,72 +246,74 @@ public abstract class Character : MonoBehaviour
             return;
         }
 
-        weaponObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], weaponHand);
+        UnEquipWeapon();
 
-        weaponObj.transform.localPosition = new Vector3(0f, 0f, 0f);
+        weaponObj = Instantiate(invManager.ItemPrefabs[item.PrefabID], weaponHand);
+        weaponObj.transform.localPosition = Vector3.zero;
         attackDamage += item.Power;
         mainWeapon = item;
     }
 
     public void UnEquipShield()
     {
-        if (shield != null)
-        {
-            defensePower -= shield.Power;
-            shield = null;
+        if (shield == null)
+            return;
+
+        defensePower -= shield.Power;
+        shield = null;
+
+        if (shieldObj != null)
             Destroy(shieldObj);
-        }
     }
 
     public void UnEquipWeapon()
     {
-        if (mainWeapon != null)
-        {
-            attackDamage -= mainWeapon.Power;
-            mainWeapon = null;
+        if (mainWeapon == null)
+            return;
+
+        attackDamage -= mainWeapon.Power;
+        mainWeapon = null;
+
+        if (weaponObj != null)
             Destroy(weaponObj);
-        }
     }
 
-    public void charInit(VFXManager vfxM , UIManager uiM, InventoryManager invM)
+    public virtual void CharInit(VFXManager vfxM, UIManager uiM, InventoryManager invM, PartyManager partyM)
     {
         vfxManager = vfxM;
         uiManager = uiM;
         invManager = invM;
-		
-		inventoryItems = new Item[InventoryManager.MAXSLOT];
+        partyManager = partyM;
+
+        if (inventoryItems == null || inventoryItems.Length != InventoryManager.MAXSLOT)
+            inventoryItems = new Item[InventoryManager.MAXSLOT];
     }
-    
+
     protected void AttackLogic()
     {
-        Character target = curCharTarget.GetComponent<Character>();
-
+        Character target = curCharTarget;
         if (target != null)
-        {
             target.ReceiveDamage(attackDamage);
-        }
     }
-    
+
     protected void MagicCastLogic(Magic magic)
     {
-        Character target = curCharTarget.GetComponent<Character>();
-
+        Character target = curCharTarget;
         if (target != null)
             target.ReceiveDamage(magic.Power);
     }
-    
+
     protected virtual void Die()
     {
         navAgent.isStopped = true;
         SetState(CharState.Die);
-
         anim.SetTrigger("Die");
 
-        invManager.SpawnDropInventory(inventoryItems, transform.position);
+        if (invManager != null)
+            invManager.SpawnDropInventory(inventoryItems, transform.position);
 
         StartCoroutine(DestroyObject());
     }
-
 
     protected void WalkToEnemyUpdate()
     {
@@ -322,7 +324,6 @@ public abstract class Character : MonoBehaviour
         }
 
         navAgent.SetDestination(curCharTarget.transform.position);
-
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
         if (distance <= attackRange)
@@ -331,22 +332,19 @@ public abstract class Character : MonoBehaviour
             Attack();
         }
     }
-    
-	private IEnumerator ShootMagicCast(Magic curMagicCast)
+
+    private IEnumerator ShootMagicCast(Magic magic)
     {
-        Vector3 chestOffset = new Vector3(0, 0.5f, 0);
+        Vector3 chestOffset = new Vector3(0f, 0.5f, 0f);
         Vector3 startPos = transform.position + chestOffset;
         Vector3 targetPos = curCharTarget.transform.position + chestOffset;
 
         if (vfxManager != null)
-            vfxManager.ShootMagic(curMagicCast.ShootID,
-                startPos, 
-                targetPos, 
-                curMagicCast.ShootTime);
+            vfxManager.ShootMagic(magic.ShootID, startPos, targetPos, magic.ShootTime);
 
-        yield return new WaitForSeconds(curMagicCast.ShootTime);
+        yield return new WaitForSeconds(magic.ShootTime);
 
-        MagicCastLogic(curMagicCast);
+        MagicCastLogic(magic);
         isMagicMode = false;
 
         SetState(CharState.Idle);
@@ -354,29 +352,25 @@ public abstract class Character : MonoBehaviour
             uiManager.IsOnCurToggleMagic(false);
     }
 
-	private IEnumerator LoadMagicCast(Magic curMagicCast)
+    private IEnumerator LoadMagicCast(Magic magic)
     {
-        Vector3 chestOffset = new Vector3(0, 0.5f, 0);
+        Vector3 chestOffset = new Vector3(0f, 0.5f, 0f);
         Vector3 startPos = transform.position + chestOffset;
 
         if (vfxManager != null)
-            vfxManager.LoadMagic(curMagicCast.LoadID,
-                startPos, 
-                curMagicCast.LoadTime);
+            vfxManager.LoadMagic(magic.LoadID, startPos, magic.LoadTime);
 
-        yield return new WaitForSeconds(curMagicCast.LoadTime);
-
-        StartCoroutine(ShootMagicCast(curMagicCast));
+        yield return new WaitForSeconds(magic.LoadTime);
+        StartCoroutine(ShootMagicCast(magic));
     }
 
-    private void MagicCast(Magic curMagicCast)
+    private void MagicCast(Magic magic)
     {
         transform.LookAt(curCharTarget.transform);
         anim.SetTrigger("MagicAttack");
-
-        StartCoroutine(LoadMagicCast(curMagicCast));
+        StartCoroutine(LoadMagicCast(magic));
     }
-    
+
     protected void WalkToMagicCastUpdate()
     {
         if (curCharTarget == null || curMagicCast == null)
@@ -386,15 +380,12 @@ public abstract class Character : MonoBehaviour
         }
 
         navAgent.SetDestination(curCharTarget.transform.position);
-
-        float distance = Vector3.Distance(transform.position,
-            curCharTarget.transform.position);
+        float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
 
         if (distance <= curMagicCast.Range)
         {
             navAgent.isStopped = true;
             SetState(CharState.MagicCast);
-
             MagicCast(curMagicCast);
         }
     }
@@ -420,7 +411,6 @@ public abstract class Character : MonoBehaviour
         }
 
         float distance = Vector3.Distance(transform.position, curCharTarget.transform.position);
-
         if (distance > attackRange)
         {
             SetState(CharState.WalkToEnemy);
@@ -429,17 +419,10 @@ public abstract class Character : MonoBehaviour
         }
     }
 
-
     public void ToggleRingSelection(bool flag)
     {
         if (ringSelection != null)
-        {
             ringSelection.SetActive(flag);
-        }
-        else
-        {
-            Debug.LogWarning("Ring Selection is not assigned on " + gameObject.name);
-        }
     }
 
     void Awake()
@@ -468,8 +451,10 @@ public abstract class Character : MonoBehaviour
 
     protected void Attack()
     {
-        transform.LookAt(curCharTarget.transform);
+        if (curCharTarget == null)
+            return;
 
+        transform.LookAt(curCharTarget.transform);
         anim.SetTrigger("Attack");
         AttackLogic();
     }
@@ -477,8 +462,6 @@ public abstract class Character : MonoBehaviour
     protected void WalkUpdate()
     {
         float distance = Vector3.Distance(transform.position, navAgent.destination);
-        Debug.Log(distance);
-
         if (distance <= navAgent.stoppingDistance)
             SetState(CharState.Idle);
     }

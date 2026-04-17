@@ -8,7 +8,6 @@ public class RightClick : MonoBehaviour
     private Camera cam;
     public LayerMask layerMask;
 
-    // Start is called once before the first execution of Update
     void Start()
     {
         instance = this;
@@ -16,14 +15,10 @@ public class RightClick : MonoBehaviour
         layerMask = LayerMask.GetMask("Ground", "Character", "Building", "Item");
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // mouse up
         if (Input.GetMouseButtonUp(1))
-        {
             TryCommand(Input.mousePosition);
-        }
     }
 
     private void TryCommand(Vector2 screenPos)
@@ -52,6 +47,7 @@ public class RightClick : MonoBehaviour
                     CommandToAttack(hit, PartyManager.instance.SelectChars);
                     break;
                 case "NPC":
+                case "Hero":
                     CommandTalkToNPC(hit, PartyManager.instance.SelectChars);
                     break;
             }
@@ -61,19 +57,13 @@ public class RightClick : MonoBehaviour
     private void CommandToAttack(RaycastHit hit, List<Character> heroes)
     {
         Character target = hit.collider.GetComponent<Character>();
-        Debug.Log("Attack: " + target);
-
         foreach (Character h in heroes)
-        {
             h.ToAttackCharacter(target);
-        }
     }
 
     private void CommandTalkToNPC(RaycastHit hit, List<Character> heroes)
     {
         Character npc = hit.collider.GetComponent<Character>();
-        Debug.Log("Talk to NPC: " + npc);
-
         if (heroes.Count <= 0)
             return;
 
@@ -85,10 +75,8 @@ public class RightClick : MonoBehaviour
         if (vfxPrefab == null)
             return;
 
-        Instantiate(vfxPrefab,
-            pos + new Vector3(0f, 0.1f, 0f), Quaternion.identity);
+        Instantiate(vfxPrefab, pos + new Vector3(0f, 0.1f, 0f), Quaternion.identity);
     }
-
 
     private void CommandToWalk(RaycastHit hit, List<Character> heroes)
     {
@@ -99,5 +87,5 @@ public class RightClick : MonoBehaviour
         }
 
         CreateVFX(hit.point, VFXManager.instance.DoubleRingMarker);
-        }
     }
+}
