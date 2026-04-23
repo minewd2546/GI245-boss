@@ -19,10 +19,15 @@ public class PartyManager : MonoBehaviour
     public int Money
     {
         get => money;
-        set => money = Mathf.Max(0, value);
+        set
+        {
+            money = Mathf.Max(0, value);
+            Settings.PartyMoney = money;
+        }
     }
 
     [SerializeField] private bool seedDefaultLoadout = true;
+    [SerializeField] private bool loadedFromHeroData;
 
     public static PartyManager instance;
 
@@ -144,6 +149,21 @@ public class PartyManager : MonoBehaviour
         return true;
     }
 
+    public void ClearParty(bool destroyMemberObjects)
+    {
+        if (destroyMemberObjects)
+        {
+            foreach (Character member in members)
+            {
+                if (member != null)
+                    Destroy(member.gameObject);
+            }
+        }
+
+        members.Clear();
+        selectChars.Clear();
+    }
+
     public void SaveAllHeroData()
     {
         if (heroData == null || heroData.Length == 0)
@@ -171,8 +191,8 @@ public class PartyManager : MonoBehaviour
 
     public void LoadAllHeroData()
     {
-        members.Clear();
-        selectChars.Clear();
+        ClearParty(true);
+        loadedFromHeroData = true;
 
         if (heroData == null || GameManager.instance == null)
             return;
@@ -250,8 +270,11 @@ public class PartyManager : MonoBehaviour
         if (members.Count > 0)
             SelectSingleHero(0);
 
-        SeedDefaultMagic();
-        SeedDefaultItems();
+        if (!loadedFromHeroData)
+        {
+            SeedDefaultMagic();
+            SeedDefaultItems();
+        }
 
         UIManager.instance?.MapToggleAvatar();
         UIManager.instance?.ShowMagicToggles();
@@ -271,5 +294,6 @@ public class PartyManager : MonoBehaviour
     void Awake()
     {
         instance = this;
+        Money = Settings.PartyMoney;
     }
 }

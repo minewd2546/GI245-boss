@@ -77,7 +77,7 @@ public class Hero : Character
         if (item == null || inventoryItems == null)
             return false;
 
-        for (int i = 0; i < inventoryItems.Length; i++)
+        for (int i = 0; i < 16 && i < inventoryItems.Length; i++)
         {
             if (inventoryItems[i] == null)
             {
@@ -87,6 +87,38 @@ public class Hero : Character
         }
 
         return false;
+    }
+
+    public void SaveItemInInventory(Item item)
+    {
+        AddItemToInventory(item);
+    }
+
+    private void EnsureProgressionDefaults()
+    {
+        if (level <= 0)
+            level = 1;
+
+        if (nextExp <= 0)
+            nextExp = 30;
+
+        if (strength <= 0)
+            strength = 1;
+
+        if (dexterity <= 0)
+            dexterity = 1;
+
+        if (constitution <= 0)
+            constitution = 1;
+
+        if (intelligence <= 0)
+            intelligence = 1;
+
+        if (wisdom <= 0)
+            wisdom = 1;
+
+        if (charisma <= 0)
+            charisma = 1;
     }
 
     public void ReceiveExp(int value)
@@ -100,6 +132,8 @@ public class Hero : Character
 
     private void UpdateStat()
     {
+        EnsureProgressionDefaults();
+
         attackDamage = 3 + Mathf.Max(0, strength - 1);
         defensePower = Mathf.Max(0, dexterity - 1);
         maxHP = 100 + Mathf.Max(0, constitution - 1) * 5;
@@ -122,6 +156,7 @@ public class Hero : Character
 
         UpdateStat();
         curHP = maxHP;
+        UnlockMagicByLevel();
     }
 
     private void CheckLevel()
@@ -130,7 +165,40 @@ public class Hero : Character
             LevelUpOnce();
 
         if (uiManager != null)
+        {
             uiManager.RefreshSelectedHeroPanel();
+            uiManager.ShowMagicToggles();
+        }
+    }
+
+    private void UnlockMagicByLevel()
+    {
+        if (vfxManager == null || vfxManager.MagicData == null)
+            return;
+
+        switch (level)
+        {
+            case 5:
+                AddMagicIfMissing(0);
+                break;
+            case 10:
+                AddMagicIfMissing(1);
+                break;
+        }
+    }
+
+    private void AddMagicIfMissing(int magicId)
+    {
+        if (magicId < 0 || magicId >= vfxManager.MagicData.Length || vfxManager.MagicData[magicId] == null)
+            return;
+
+        for (int i = 0; i < magicSkills.Count; i++)
+        {
+            if (magicSkills[i] != null && magicSkills[i].ID == vfxManager.MagicData[magicId].id)
+                return;
+        }
+
+        magicSkills.Add(new Magic(vfxManager.MagicData[magicId]));
     }
 
     public void SaveToData(HeroData data)
@@ -188,6 +256,39 @@ public class Hero : Character
         shield = data.shield;
 
         UpdateStat();
+        RestoreEquipmentFromInventory();
+        curHP = Mathf.Clamp(curHP, 0, maxHP);
+    }
+
+    private void RestoreEquipmentFromInventory()
+    {
+        Item weaponToEquip = inventoryItems != null && inventoryItems.Length > 16 ? inventoryItems[16] ?? mainWeapon : mainWeapon;
+        Item shieldToEquip = inventoryItems != null && inventoryItems.Length > 17 ? inventoryItems[17] ?? shield : shield;
+
+        mainWeapon = null;
+        shield = null;
+
+        if (weaponObj != null)
+            Destroy(weaponObj);
+
+        if (shieldObj != null)
+            Destroy(shieldObj);
+
+        if (weaponToEquip != null)
+        {
+            if (inventoryItems != null && inventoryItems.Length > 16)
+                inventoryItems[16] = weaponToEquip;
+
+            EquipWeapon(weaponToEquip);
+        }
+
+        if (shieldToEquip != null)
+        {
+            if (inventoryItems != null && inventoryItems.Length > 17)
+                inventoryItems[17] = shieldToEquip;
+
+            EquipShield(shieldToEquip);
+        }
     }
 
     protected void WalkToNPCUpdate()
@@ -225,6 +326,7 @@ public class Hero : Character
     public override void CharInit(VFXManager vfxM, UIManager uiM, InventoryManager invM, PartyManager partyM)
     {
         base.CharInit(vfxM, uiM, invM, partyM);
+        EnsureProgressionDefaults();
         UpdateStat();
     }
 

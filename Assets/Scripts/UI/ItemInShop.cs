@@ -65,6 +65,12 @@ public class ItemInShop : MonoBehaviour, IPointerClickHandler
                 priceText = texts[1];
         }
 
+        if (item == null)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (itemText != null)
             itemText.text = item.ItemName;
 
@@ -99,6 +105,12 @@ public class ItemInShop : MonoBehaviour, IPointerClickHandler
 
         if (toggleIcon != null)
             toggleIcon.isOn = true;
+    }
+
+    public void SetSelectedWithoutNotify(bool isSelected)
+    {
+        if (toggleIcon != null)
+            toggleIcon.SetIsOnWithoutNotify(isSelected);
     }
 
     private void HandleToggle(bool isOn)

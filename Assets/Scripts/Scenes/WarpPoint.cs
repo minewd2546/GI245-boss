@@ -7,6 +7,9 @@ public class WarpPoint : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (Settings.IsWarping)
+            return;
+
         Hero hero = other.GetComponent<Hero>();
         if (hero == null || GameManager.instance == null || PartyManager.instance == null)
             return;

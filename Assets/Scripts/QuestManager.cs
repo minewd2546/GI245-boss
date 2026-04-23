@@ -130,6 +130,7 @@ public class QuestManager : MonoBehaviour
             if (hero.InventoryItems[i] == null)
             {
                 hero.InventoryItems[i] = item;
+                PartyManager.instance.ShareExpToParty(curQuest.RewardExp);
                 curQuest.Status = QuestStatus.Finish;
                 PartyManager.instance.QuestList.Remove(curQuest);
                 RemoveCurQuestFromNPC();

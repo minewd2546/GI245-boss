@@ -7,6 +7,8 @@ public class MainMenu : MonoBehaviour
 
     public void StartNewGame()
     {
+        Settings.SelectedHeroPrefabID = 0;
+        Settings.PartyMoney = Settings.StartingMoney;
         Settings.IsNewGame = true;
         Settings.IsWarping = false;
         SceneManager.LoadScene(selectCharScene);

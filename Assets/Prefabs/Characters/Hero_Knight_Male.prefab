@@ -3028,6 +3028,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5e798cad45d8ae4ca67311b2d8be6f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hero
+  avatarPic: {fileID: 21300000, guid: 3e6c38b3b6a57db43a330ccea0e4044b, type: 3}
+  charName: Alan
   magicSkills: []
   curMagicCast:
     id: 0
@@ -3048,6 +3050,7 @@ MonoBehaviour:
     icon: {fileID: 0}
     power: 0
     prefabID: 0
+    normalPrice: 0
   weaponHand: {fileID: 496550}
   weaponObj: {fileID: 0}
   shield:
@@ -3057,12 +3060,13 @@ MonoBehaviour:
     icon: {fileID: 0}
     power: 0
     prefabID: 0
+    normalPrice: 0
   shieldHand: {fileID: 483062}
   shieldObj: {fileID: 0}
   defensePower: 0
   state: 0
   ringSelection: {fileID: 0}
-  curHP: 10
+  curHP: 100
   maxHP: 100
   curCharTarget: {fileID: 0}
   attackDamage: 3
@@ -3070,6 +3074,16 @@ MonoBehaviour:
   attackCoolDown: 2
   attackTimer: 0
   findingRange: 20
+  prefabId: 0
+  exp: 0
+  level: 1
+  nextExp: 30
+  strength: 10
+  dexterity: 5
+  constitution: 5
+  intelligence: 5
+  wisdom: 5
+  charisma: 5
 --- !u!114 &-7791589320315208881
 MonoBehaviour:
   m_ObjectHideFlags: 0

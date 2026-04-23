@@ -6,8 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 62676c6fa0be24142b3e36efa2c01e98
+  - enabled: 1
+    path: Assets/Scenes/SelectChar.unity
+    guid: 63d53e5fdbbc7d547b85c69772311f23
+  - enabled: 1
     path: Assets/Scenes/VillageScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/TestScene.unity
+    guid: 226a35f612fc34549b93ff446652d7dd
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

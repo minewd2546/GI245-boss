@@ -60,8 +60,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject btnNotFinish;
     [SerializeField] private TMP_Text btnNotFinishText;
     [SerializeField] private GameObject btnJoinParty;
-    [SerializeField] private GameObject btnNotJoinParty;
     [SerializeField] private TMP_Text btnJoinPartyText;
+    [SerializeField] private GameObject btnNotJoinParty;
     [SerializeField] private TMP_Text btnNotJoinPartyText;
     [SerializeField] private Hero pendingJoinHero;
 
@@ -733,7 +733,7 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < curShopNpc.ShopItems.Length; i++)
         {
             Item item = curShopNpc.ShopItems[i];
-            if (item == null)
+            if (!IsUsableShopItem(item))
                 continue;
 
             GameObject obj = Instantiate(itemInShopPrefab, shopListParent);
@@ -757,7 +757,7 @@ public class UIManager : MonoBehaviour
         for (int i = 0; i < hero.InventoryItems.Length; i++)
         {
             Item item = hero.InventoryItems[i];
-            if (item == null)
+            if (!IsUsableShopItem(item))
                 continue;
 
             GameObject obj = Instantiate(itemInShopPrefab, partyListParent);
@@ -772,40 +772,56 @@ public class UIManager : MonoBehaviour
 
     public void SelectShopItem(Item item)
     {
+        ClearCardSelection(partyItemList);
         selectedShopItem = item;
+        selectedPartyItem = null;
     }
 
     public void SelectPartyItem(Item item)
     {
+        ClearCardSelection(shopItemList);
+        selectedShopItem = null;
         selectedPartyItem = item;
     }
 
-    private Item GetSelectedItemFromList(List<ItemInShop> cards)
+    private bool IsUsableShopItem(Item item)
     {
-        if (cards == null)
-            return null;
+        if (item == null)
+            return false;
 
-        for (int i = 0; i < cards.Count; i++)
-        {
-            if (cards[i] != null && cards[i].IsSelected)
-                return cards[i].Item;
-        }
-
-        return null;
+        return !string.IsNullOrEmpty(item.ItemName) || item.Icon != null || item.NormalPrice > 0;
     }
 
-    private Item GetFirstItemFromList(List<ItemInShop> cards)
+    private void ClearCardSelection(List<ItemInShop> cards)
     {
         if (cards == null)
-            return null;
+            return;
 
         for (int i = 0; i < cards.Count; i++)
         {
-            if (cards[i] != null && cards[i].Item != null)
-                return cards[i].Item;
+            if (cards[i] != null)
+                cards[i].SetSelectedWithoutNotify(false);
+        }
+    }
+
+    private int FindItemIndex(Character hero, Item item)
+    {
+        if (hero == null || item == null || hero.InventoryItems == null)
+            return -1;
+
+        for (int i = 0; i < hero.InventoryItems.Length; i++)
+        {
+            if (ReferenceEquals(hero.InventoryItems[i], item))
+                return i;
         }
 
-        return null;
+        for (int i = 0; i < hero.InventoryItems.Length; i++)
+        {
+            if (hero.InventoryItems[i] != null && hero.InventoryItems[i].ID == item.ID)
+                return i;
+        }
+
+        return -1;
     }
 
     private TMP_Text FindTMPByName(Transform root, string objectName)
@@ -894,11 +910,6 @@ public class UIManager : MonoBehaviour
 
     public void SellItemToShop()
     {
-        if (selectedPartyItem == null)
-            selectedPartyItem = GetSelectedItemFromList(partyItemList);
-        if (selectedPartyItem == null)
-            selectedPartyItem = GetFirstItemFromList(partyItemList);
-
         if (curShopNpc == null || selectedPartyItem == null || PartyManager.instance.SelectChars.Count == 0)
             return;
 
@@ -906,25 +917,29 @@ public class UIManager : MonoBehaviour
         if (hero == null)
             return;
 
-        if (!curShopNpc.AddShopItem(selectedPartyItem))
-            return;
-
-        if (!InventoryManager.instance.RemoveItemFromParty(selectedPartyItem.ID))
+        int inventoryIndex = FindItemIndex(hero, selectedPartyItem);
+        if (inventoryIndex < 0)
             return;
 
         int price = Mathf.Max(1, selectedPartyItem.NormalPrice);
+        if (curShopNpc.Money < price)
+            return;
+
+        if (!curShopNpc.AddShopItem(selectedPartyItem))
+            return;
+
+        if (inventoryIndex == 16 || inventoryIndex == 17)
+            InventoryManager.instance.RemoveItemInBag(inventoryIndex);
+        else
+            hero.InventoryItems[inventoryIndex] = null;
+
         PartyManager.instance.Money += price;
-        curShopNpc.Money = Mathf.Max(0, curShopNpc.Money - price);
+        curShopNpc.Money -= price;
         PrepareShopPanel(curShopNpc);
     }
 
     public void BuyItemFromShop()
     {
-        if (selectedShopItem == null)
-            selectedShopItem = GetSelectedItemFromList(shopItemList);
-        if (selectedShopItem == null)
-            selectedShopItem = GetFirstItemFromList(shopItemList);
-
         if (curShopNpc == null || selectedShopItem == null || PartyManager.instance.SelectChars.Count == 0)
             return;
 
@@ -936,11 +951,14 @@ public class UIManager : MonoBehaviour
         if (PartyManager.instance.Money < price)
             return;
 
-        if (!hero.AddItemToInventory(selectedShopItem))
-            return;
-
         if (!curShopNpc.RemoveShopItem(selectedShopItem))
             return;
+
+        if (!hero.AddItemToInventory(selectedShopItem))
+        {
+            curShopNpc.AddShopItem(selectedShopItem);
+            return;
+        }
 
         PartyManager.instance.Money -= price;
         curShopNpc.Money += price;
