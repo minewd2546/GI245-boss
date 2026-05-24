@@ -214,6 +214,11 @@ public class PartyManager : MonoBehaviour
 
         if (members.Count > 0)
             SelectSingleHero(0);
+
+        UIManager.instance?.MapToggleAvatar();
+        UIManager.instance?.RefreshSelectedHeroPanel();
+        UIManager.instance?.ShowMagicToggles();
+        UIManager.instance?.RefreshInventoryPanel();
     }
 
     private void SeedDefaultMagic()
@@ -278,6 +283,8 @@ public class PartyManager : MonoBehaviour
 
         UIManager.instance?.MapToggleAvatar();
         UIManager.instance?.ShowMagicToggles();
+
+        
     }
 
     void Update()
@@ -293,6 +300,9 @@ public class PartyManager : MonoBehaviour
 
     void Awake()
     {
+        if (instance != null && instance != this)
+            return;
+
         instance = this;
         Money = Settings.PartyMoney;
     }

@@ -427,6 +427,15 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void RefreshInventoryPanel()
+    {
+        if (inventoryPanel != null && inventoryPanel.activeInHierarchy)
+        {
+            ClearInventory();
+            ShowInventory();
+        }
+    }
+
     public void SetCurItemInUse(ItemDrag itemDrag, int index)
     {
         curItemDrag = itemDrag;

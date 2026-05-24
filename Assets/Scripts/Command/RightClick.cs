@@ -15,6 +15,12 @@ public class RightClick : MonoBehaviour
         layerMask = LayerMask.GetMask("Ground", "Character", "Building", "Item");
     }
 
+    private void EnsureCamera()
+    {
+        if (cam == null)
+            cam = Camera.main;
+    }
+
     void Update()
     {
         if (Input.GetMouseButtonUp(1))
@@ -23,6 +29,10 @@ public class RightClick : MonoBehaviour
 
     private void TryCommand(Vector2 screenPos)
     {
+        EnsureCamera();
+        if (cam == null)
+            return;
+
         Ray ray = cam.ScreenPointToRay(screenPos);
         RaycastHit hit;
 

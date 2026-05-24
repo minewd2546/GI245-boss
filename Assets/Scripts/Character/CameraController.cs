@@ -29,8 +29,18 @@ public class CameraController : MonoBehaviour
         moveSpeed = 50;
     }
 
+    private void EnsureCamera()
+    {
+        if (cam == null)
+            cam = Camera.main;
+    }
+
     private void Zoom()
     {
+        EnsureCamera();
+        if (cam == null)
+            return;
+
         zoomModifier = Input.GetAxis("Mouse ScrollWheel");
         if (Input.GetKey(KeyCode.Z))
             zoomModifier = -0.1f;

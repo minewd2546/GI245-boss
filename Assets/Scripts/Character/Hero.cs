@@ -224,6 +224,7 @@ public class Hero : Character
         data.charisma = charisma;
         data.mainWeapon = mainWeapon;
         data.shield = shield;
+        data.magicSkillIds = magicSkills != null ? magicSkills.ConvertAll(m => m.ID).ToArray() : new int[0];
 
         if (inventoryItems == null)
             data.inventoryItems = new Item[InventoryManager.MAXSLOT];
@@ -255,9 +256,34 @@ public class Hero : Character
         mainWeapon = data.mainWeapon;
         shield = data.shield;
 
+        RestoreMagicFromData(data);
         UpdateStat();
         RestoreEquipmentFromInventory();
         curHP = Mathf.Clamp(curHP, 0, maxHP);
+    }
+
+    private void RestoreMagicFromData(HeroData data)
+    {
+        magicSkills.Clear();
+
+        if (data == null || data.magicSkillIds == null || data.magicSkillIds.Length == 0)
+            return;
+
+        if (vfxManager == null || vfxManager.MagicData == null)
+            return;
+
+        foreach (int skillId in data.magicSkillIds)
+        {
+            for (int i = 0; i < vfxManager.MagicData.Length; i++)
+            {
+                MagicData magicData = vfxManager.MagicData[i];
+                if (magicData != null && magicData.id == skillId)
+                {
+                    magicSkills.Add(new Magic(magicData));
+                    break;
+                }
+            }
+        }
     }
 
     private void RestoreEquipmentFromInventory()

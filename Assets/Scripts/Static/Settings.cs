@@ -7,4 +7,5 @@ public static class Settings
     public static bool IsNewGame = true;
     public static bool IsWarping;
     public static int TargetEnterPointID;
+    public static float WarpDisabledUntil;
 }

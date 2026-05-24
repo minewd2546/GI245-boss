@@ -20,6 +20,7 @@ public class HeroData : ScriptableObject
     public int wisdom;
     public int charisma;
     public Item[] inventoryItems = new Item[InventoryManager.MAXSLOT];
+    public int[] magicSkillIds = new int[0];
     public Item mainWeapon;
     public Item shield;
 
@@ -42,6 +43,7 @@ public class HeroData : ScriptableObject
         wisdom = 0;
         charisma = 0;
         inventoryItems = new Item[InventoryManager.MAXSLOT];
+        magicSkillIds = new int[0];
         mainWeapon = null;
         shield = null;
     }

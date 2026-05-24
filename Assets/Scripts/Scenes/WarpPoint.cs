@@ -7,7 +7,7 @@ public class WarpPoint : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (Settings.IsWarping)
+        if (Settings.IsWarping || Time.time < Settings.WarpDisabledUntil)
             return;
 
         Hero hero = other.GetComponent<Hero>();
@@ -20,3 +20,4 @@ public class WarpPoint : MonoBehaviour
         GameManager.instance.Warp(targetSceneName, targetEnterPointID);
     }
 }
+

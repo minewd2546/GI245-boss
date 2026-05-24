@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daeb2c93834810944bbe91945c82fd9b, type: 3}
   m_Name: 001_GlowSpot
   m_EditorClassIdentifier: Assembly-CSharp::MagicData
-  id: 0
+  id: 1
   magicName: Glow Spot
   icon: {fileID: 21300000, guid: 866295eb7bde2314bb6f6ff3de6419e8, type: 3}
   range: 10

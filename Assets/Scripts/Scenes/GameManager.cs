@@ -56,10 +56,12 @@ public class GameManager : MonoBehaviour
             if (mapManager != null)
                 mapManager.MovePartyToEnterPoint(Settings.TargetEnterPointID);
 
+            Settings.WarpDisabledUntil = Time.time + 1f;
             Settings.IsWarping = false;
             UIManager.instance?.MapToggleAvatar();
             UIManager.instance?.RefreshSelectedHeroPanel();
             UIManager.instance?.ShowMagicToggles();
+            UIManager.instance?.RefreshInventoryPanel();
             return;
         }
 
@@ -118,6 +120,7 @@ public class GameManager : MonoBehaviour
         }
 
         Settings.IsWarping = true;
+        Settings.WarpDisabledUntil = Time.time + 1f;
         Settings.TargetEnterPointID = targetEnterPointID;
         SceneManager.LoadScene(targetScene);
     }

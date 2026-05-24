@@ -21,6 +21,12 @@ public class LeftClick : MonoBehaviour
         boxSelection = UIManager.instance.SelectionBox;
     }
 
+    private void EnsureCamera()
+    {
+        if (cam == null)
+            cam = Camera.main;
+    }
+
     private void ClearRingSelection()
     {
         foreach (Character h in PartyManager.instance.SelectChars)
@@ -72,6 +78,10 @@ public class LeftClick : MonoBehaviour
 
     private void TrySelect(Vector2 screenPos)
     {
+        EnsureCamera();
+        if (cam == null)
+            return;
+
         Ray ray = cam.ScreenPointToRay(screenPos);
         RaycastHit hit;
 
